@@ -1,0 +1,16 @@
+load_file("modelspecs.hoc")
+load_file("hetrig.hoc")
+
+// make graphical interface tools available to this program
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc")
+nrnmainmenu()
+
+radius = 4
+p=.4
+synWeight=.4
+noisesynWeight=1
+noiseInterval =1000
+tstop = 1500
+mixratio = .82
+
+myrun()

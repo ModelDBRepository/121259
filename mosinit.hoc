@@ -1,0 +1,6 @@
+load_file("nrngui.hoc")
+
+xpanel("Simulations from Bogaard et al. 2009")
+xbutton("homogenous network run","load_file(\"homrun.hoc\")")
+xbutton("heterogenous network run","load_file(\"hetrun.hoc\")")
+xpanel()

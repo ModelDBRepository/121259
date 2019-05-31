@@ -1,0 +1,15 @@
+load_file("modelspecs.hoc")
+load_file("homrig.hoc")
+
+// make graphical interface tools available to this program
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc")
+nrnmainmenu()
+
+radius = 4 //.5*number of outbound connections
+p= .4 //rewiring
+synWeight=.7 
+noiseInterval=1000
+tstop = 600
+
+myrun()
+

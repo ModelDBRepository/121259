@@ -1,0 +1,262 @@
+begintemplate cellA //Cell A is Type I
+  public soma, dendrite, nclist
+  create soma, dendrite
+  objectvar nclist
+  
+  proc init() {
+  
+  nclist = new List()
+  // Migliore parameters
+  gna =  0.3
+  gkdr = 0.1
+  gka = 0.048
+  ghd=0.0001
+  vhalfn=13
+  celsius = 34.0  
+  Vrest = -65
+  
+  
+  // Borg-Graham morphology
+  
+  connect dendrite(0), soma(0) 	
+  
+  soma{ 
+  /* The soma in the original Working Model is originally a 
+  sphere with diam = 35 um. In NEURON it is a cylinder.  
+  Also, in the simulator SURF-HIPPO the underlying segment
+  circuit is a single-ended scheme, while in NEURON it is a 
+  center-tapped scheme. Therefore, the half-axial resistance 
+  of the soma must be mached to the half-axial resistance of 
+  the first dendritic segment.
+  
+  ==>  total soma surface = PI*diam*L = 3.85e3 um2       (1)
+   
+  ==>  half axial resistance of 1st dendritic segment:
+          
+                       0.5 * 4 * Ra * dendrite.L
+           Rhalf = ---------------------------------------  = 2.1 MOhm.
+                     PI * dendrite.diam^2 * dendrite.nseg
+  
+  
+                       0.5 * 4 * Ra * soma.L
+             ==>   -------------------------- = 2.1 MOhm  (2)
+                          PI * soma.diam^2 
+  
+                   
+           Now, substituting L from equation (1) gives 
+                        L = 137.5 um
+                        diam = 9.0 um
+  
+  */
+  
+  	nseg = 1
+          L = 135.74
+          diam = 9.0246
+  	      cm = 0.7
+  	insert WMPas			//Borg-Graham passive kinetics
+  	insert hd  
+          ghdbar_hd=ghd		//Migliore active conductances
+  		    vhalfl_hd=-82
+  		    ehd_hd=-30
+  	insert nax  
+          gbar_nax=gna 
+  	insert kdr  
+          gkdrbar_kdr=gkdr
+  		    vhalfn_kdr=vhalfn
+    insert kap  
+          gkabar_kap = gka
+  	ena=55
+  	ek=-90
+  }
+  
+  dendrite{
+  	nseg = 5	// always put nseg first
+  	cm = 0.7
+  	L = 1200	// each segment is 240 um long
+  	diam = 12
+  	insert WMPasDend	//Borg-Graham passive kinetics
+  }
+  
+  forall v=Vrest
+  forall Ra = 200
+  //forall psection()
+  access soma
+  }
+endtemplate cellA
+
+begintemplate cellB //Cell B is Type I
+  public soma, dendrite, nclist
+  
+  create soma, dendrite
+  
+  objectvar nclist
+  
+  
+  proc init() {
+  
+  nclist = new List()
+  
+  // Migliore parameters
+  gna =  .15
+  gkdr = 0.05
+  KMULTP = 0.048
+  ghd=0.0005
+  celsius = 34.0  
+  Vrest = -65
+  
+  // Borg-Graham morphology
+  connect dendrite(0), soma(0) 	
+  
+  soma{ 
+  
+  	nseg = 1
+        	L = 135.74
+        	diam = 9.0246
+  	cm = 0.7
+  	insert WMPas	//Borg-Graham passive kinetics
+  	insert hd 
+          ghdbar=ghd	//Migliore active conductances
+  	       vhalfl_hd=-82
+    insert nax  
+          gbar_nax=.5     
+    insert kdr 
+          gkdrbar_kdr=.5
+  	       vhalfn_kdr=13
+    insert kap 
+          gkabar_kap = KMULTP
+  //      insert pas g_pas = 1/RmSoma Ra=RaSoma cm=CmSoma  //Migliore passive kinetics
+  }
+  
+  dendrite{
+  	nseg = 5	// always put nseg first
+  	cm = 0.7
+  	L = 1200	// each segment is 240 um long
+  	diam = 12
+  	insert WMPasDend	//Borg-Graham passive kinetics
+  }
+  
+  
+  forall Ra = 200
+  //forall psection()
+  
+  access soma
+  }
+endtemplate cellB
+
+begintemplate cellC //Cell C is Type II
+  public soma, dendrite, nclist
+  create soma, dendrite
+  objectvar nclist
+  
+  proc init() {
+  
+  nclist = new List()
+  // Migliore parameters
+  gna =  0.3
+  gkdr = 0.08
+  gka = 0.048
+  ghd=0.00075
+  vhalfn=0
+  celsius = 34.0  
+  Vrest = -65
+  
+  
+  // Borg-Graham morphology
+  connect dendrite(0), soma(0) 	
+  
+  soma{ 
+  	nseg = 1
+          L = 135.74
+          diam = 9.0246
+  	cm = 0.7
+  	insert WMPas			//Borg-Graham passive kinetics
+  	insert hd  
+          ghdbar_hd=ghd		//Migliore active conductances
+  		    vhalfl_hd=-82
+  		    ehd_hd=-30
+  	insert nax  
+          gbar_nax=gna 
+  	insert kdr  
+          gkdrbar_kdr=gkdr
+  		    vhalfn_kdr=vhalfn
+    insert kap
+          gkabar_kap = gka
+  	ena=55
+  	ek=-90
+  }
+  
+  dendrite{
+  	nseg = 5	// always put nseg first
+  	cm = 0.7
+  	L = 1200	// each segment is 240 um long
+  	diam = 12
+  	insert WMPasDend	//Borg-Graham passive kinetics
+  }
+  
+  forall v=Vrest
+  forall Ra = 200
+  //forall psection()
+  
+  access soma
+  
+  }
+endtemplate cellC
+
+begintemplate cellD //Cell D is Type II
+  public soma, dendrite, nclist
+  
+  create soma, dendrite
+  
+  objectvar nclist
+  
+  
+  proc init() {
+  
+  nclist = new List()
+  
+  // Migliore parameters
+  gna =  .15
+  gkdr = 0.7
+  KMULTP = 0.03
+  ghd=0.0005
+  celsius = 34.0  
+  Vrest = -65
+  
+  // Borg-Graham morphology
+  connect dendrite(0), soma(0) 	
+  
+  soma{ 
+  
+  	nseg = 1
+          L = 135.74
+          diam = 9.0246
+  	     cm = 0.7
+  	insert WMPas2	//Borg-Graham passive kinetics
+  	insert hd2
+          ghdbar=ghd	//Migliore active conductances
+  	      vhalfl_hd2=-82 
+          ghdbar_hd2=.0005
+    insert nax2  
+          gbar_nax2=1.5     
+    insert kdr2
+          gkdrbar_kdr2=.7 
+          vhalfn_kdr2=0
+    insert kap2 
+          gkabar_kap2 = .03
+  }
+  
+  dendrite{
+  	nseg = 5	// always put nseg first
+  	cm = 0.7
+  	L = 1200	// each segment is 240 um long
+  	diam = 12
+  	insert WMPasDend	//Borg-Graham passive kinetics
+  }
+  
+  
+  forall Ra = 200
+  //forall psection()
+  
+  access soma
+  }
+endtemplate cellD

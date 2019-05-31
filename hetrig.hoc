@@ -1,0 +1,170 @@
+prev=use_mcell_ran4(1)
+numSynapses = numCells = 250  	                 //num hipp cells in network
+noiseRandom=1				                             //const noise parameters
+noiseNumber=1e15
+noiseStart=0
+seed=netstimSeed=2                                           //initialize seed
+
+/*---------------------CREATE SEED FROM SYSTEM DATE--------------------*/
+strdef strSeed,strNSSeed	
+objref szFunctionsObject		                     //setting date to seed
+szFunctionsObject = new StringFunctions()
+proc setSeed(){
+	system("date +%m%d%H%M%S",strSeed)
+	szFunctionsObject.left(strSeed,10)
+	sscanf(strSeed,"%lf",&seed)
+	
+	system("date +%d%H%M%S",strNSSeed)
+	szFunctionsObject.left(strNSSeed,9)
+	sscanf(strNSSeed,"%lf",&netstimSeed)
+}
+
+
+/*----------------------RANDOM NUMBER GENERATOR------------------------*/
+objref r
+r = new Random()
+//index = r.MCellRan4()
+func randNum(){                                  //generates real number between two arguments
+	rand=r.uniform(0,$1)
+	return rand
+}
+func randIntNum(){                               //generates integers between two arguments
+	rand=r.discunif(0, $1)
+	return rand
+}
+
+/*---------------------Makes array of cell types----------------*/
+objref cellr
+cellr = new Random()
+objref veccelltype, vectest
+veccelltype = new Vector(numCells)
+proc makeCelltypevec(){
+  veccelltype = new Vector(numCells)
+  vectest=new Vector()
+  cellr.uniform(0,1)
+  veccelltype.setrand(cellr)
+  vectest.where(veccelltype,"<",$1)
+  while(abs(vectest.size()/250 - $1)>0){ //how accurate must %mix be
+    dummy=r.uniform(0,1)
+    veccelltype.setrand(r)
+    vectest.where(veccelltype,"<",$1)
+  }
+}
+
+/*----------------------------CREATE CELLS-----------------------------*/
+//makeCell(cellindexnumber, %tI)
+objectvar cell[numCells], dendsynapses[numSynapses], veccelltype
+veccelltype=new Vector(numCells)
+proc makeCell(){
+    makeCelltypevec($1)
+    for (i=0;i<veccelltype.size();i+=1){
+      if($1>veccelltype.x[i]){
+      cell[i] = new cellA()
+      veccelltype.x[i] = 1
+      }else if($1<=veccelltype.x[i]){
+      cell[i] = new cellD()
+      veccelltype.x[i] = 2
+      }else {print "uhoh"}      
+    }
+}
+
+/*----------------------CREATE NETWORK WITH NOISE---------------------*/
+//makeNetwork()
+proc makeNetwork(){
+  numI=0                                         //initialises counter for heterogeneous net pop
+	makeCell(mixratio)                             //loop creating cells
+	for i=0, numCells-1 {                          //loop popping on synapses
+		cell[i].dendrite dendsynapses[i] = new ExpSyn(1)	
+	}
+  
+	//syntax for connecting cells SThcells[1].soma SThcells[0].nclist.append(new NetCon(&v(1), syn[0], -20, 0.5, synWeight))
+	for i=0, numSynapses-1{                        //connect cells
+	numConn=radius
+	while(numConn>0){
+		connCells(i, numConn)
+		numConn=numConn-1
+		}
+	addNoise(i,noiseRandom, noiseNumber, noiseStart, noiseInterval)
+	}
+}
+
+//add noise process
+objectvar pp[numCells]
+proc addNoise(){
+	pp[$1] = new NetStim()
+	pp[$1].noise=$2
+	pp[$1].number=$3
+	pp[$1].start=$4
+	pp[$1].interval=$5
+	pp[$1].seed(netstimSeed)
+	cell[$1].nclist.append(new NetCon(pp[$1], dendsynapses[$1], -20, .5, noisesynWeight))
+	}
+
+
+//syntax for netcon: new NetCon(&source_v, synapse, threshold, delay, weight)
+proc connCells(){
+	if(randNum(1)<p){
+		randConnect=randIntNum(numCells-1)
+    while (randConnect==$1){
+      randConnect=randIntNum(numCells-1)
+    }
+		cell[$1].soma cell[randConnect].nclist.append(new NetCon(&v(1), dendsynapses[randConnect], -20, 0.5, synWeight))
+
+  }else if(($1+$2)<numCells){
+		cell[$1].soma cell[$1+$2].nclist.append(new NetCon(&v(1), dendsynapses[$1+$2], -20, 0.5, synWeight))
+
+  }else{
+		cell[$1].soma cell[$1+$2-numCells].nclist.append(new NetCon(&v(1), dendsynapses[$1+$2-numCells], -20, 0.5, synWeight))
+
+  }
+	randConnect2=randIntNum(numCells-1)
+  while (randConnect2==$1){
+    randConnect2=randIntNum(numCells-1)
+  }
+	if(randNum(1)<p && randConnect2!=randConnect){
+		cell[$1].soma cell[randConnect].nclist.append(new NetCon(&v(1), dendsynapses[randConnect], -20, 0.5, synWeight))
+
+  }else if(($1-$2)>=0){
+		cell[$1].soma cell[$1-$2].nclist.append(new NetCon(&v(1), dendsynapses[$1-$2], -20, .5, synWeight))
+
+  }else{
+		cell[$1].soma cell[numCells+($1-$2)].nclist.append(new NetCon(&v(1), dendsynapses[numCells+($1-$2)], -20, .5, synWeight))
+
+  }
+}
+
+objref timevec, idvec, recncs, tobj, nil, indeces
+timevec = new Vector()
+idvec = new Vector()
+indeces = new Vector()
+recncs = new List()
+objref tobj, f, f2,strf
+
+/*-----------------CREATE RASTER PLOT AND OUTPUT FILES-----------------*/
+objref g
+proc plotraster(){
+  xmin=700
+  xmax=1300
+	g= new Graph()
+	g.size(xmin, xmax, 0, numCells)
+  indeces.indvwhere(timevec,"[]",xmin, xmax)
+  idvec.remove(0,indeces.x[0])
+  timevec.remove(0,indeces.x[0])
+  idvec.mark(g,timevec,"O",2)
+  g.exec_menu("View = plot")
+}
+
+/*------------------------PROCS FOR BATCH RUN--------------------------*/
+proc myrun(){
+  //setSeed() uncomment for seed from system date
+  newhighindex=r.MCellRan4(seed)
+  makeNetwork()
+  for i=0,numCells-1 {		//netcons for raster plots and data output 
+  cell[i].soma tobj = new NetCon(&v(0.5),nil)
+  tobj.record(timevec, idvec, i+1)
+  recncs.append(tobj)
+  }
+  run()
+  plotraster()
+}
+
